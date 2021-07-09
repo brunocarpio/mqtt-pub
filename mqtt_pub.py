@@ -9,7 +9,6 @@ from charm.core.engine.util import objectToBytes,bytesToObject
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from base64 import b64encode
-from random import randrange
 from datetime import datetime
 
 parser = argparse.ArgumentParser(add_help=False)
