@@ -7,9 +7,9 @@ from charm.toolbox.secretutil import SecretUtil
 from charm.toolbox.pairinggroup import PairingGroup,ZR,G2,GT
 from charm.core.engine.util import objectToBytes,bytesToObject
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad
 from base64 import b64encode
 from datetime import datetime
+import pytz
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('--host', '-h', required=True)
@@ -51,23 +51,23 @@ def cpabe_encrypt(pk, M, policy_str):
 def encrypt(payload):
     aes_key = group.random(GT)
     aes_key_bytes = group.serialize(aes_key)
-    encrypted_aes_key_dict = cpabe_encrypt(pk, aes_key, access_policy)
+    encrypted_aes_key = cpabe_encrypt(pk, aes_key, access_policy)
 
-    cipher = AES.new(aes_key_bytes[:16], AES.MODE_CBC)
-    encrypted_data_bytes = cipher.encrypt(pad(payload.encode(), AES.block_size))
-    iv = b64encode(cipher.iv).decode('utf-8')
-    encrypted_data = b64encode(encrypted_data_bytes).decode('utf-8')
-    aes_encryption_dict = {'iv': iv, 'encrypted_data': encrypted_data}
+    cipher = AES.new(aes_key_bytes[:16], AES.MODE_EAX)
+    nonce = cipher.nonce
+    ciphertext, tag = cipher.encrypt_and_digest(payload.encode())
+    encrypted_data_k = ['nonce', 'ciphertext', 'tag']
+    encrypted_data_v = [b64encode(x).decode('utf-8') for x in (nonce, ciphertext, tag)]
+    encrypted_data = dict(zip(encrypted_data_k, encrypted_data_v))
 
-    ct_dict = { 'encrypted_aes_key_dict': encrypted_aes_key_dict , 'aes_encryption_dict': aes_encryption_dict }
-    ct_bytes = objectToBytes(ct_dict, group)
-    return ct_bytes
+    return objectToBytes({'encrypted_aes_key': encrypted_aes_key,
+        'encrypted_data': encrypted_data}, group)
 
 def main():
     client.connect(mqttBroker)
     client.publish(topic, encrypt(msg))
     print('--------------------------------------------------------------------------------')
-    print(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+    print(datetime.now(pytz.timezone('America/Lima')).strftime("%d/%m/%Y %H:%M:%S"))
     print('msg: ' + str(msg))
     print('topic: ' + topic)
     print('--------------------------------------------------------------------------------')
