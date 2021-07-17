@@ -1,2 +1,9 @@
 # mqtt-cpabe
 ## publisher
+### Dependencias
+- charm
+- paho-mqtt
+- requests
+- pytz
+- matplotlib
+- pycryptodome
