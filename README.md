@@ -1,5 +1,8 @@
 # mqtt-cpabe
-## publisher
+## Publisher
+
+Publicador MQTT utilizando la libreria Eclipse Paho Python, bajo encriptacion Ciphertext Policy Attribute Based Encryption.
+
 ### Dependencias
 - charm
 - paho-mqtt
